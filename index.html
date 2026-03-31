@@ -1,0 +1,1692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Windows OS Installation Simulator - Ultimate Edition</title>
+    <style>
+        /* Global Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none; /* Anti-cheat: prevent text selection */
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: #fff;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            color: #00d4ff;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+        }
+
+        .move-counter {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #ff6b6b;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .phase-indicator {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: #00d4ff;
+            color: #1a1a2e;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
+
+        /* Main Container */
+        /* Modified Game Container - Side by side layout */
+        .game-container {
+            flex: 1;
+            display: flex;
+            flex-direction: row;  /* Changed from column to row */
+            max-width: 1200px;     /* Increased to fit both panels */
+            margin: 0 auto;
+            width: 100%;
+            padding: 10px;
+            gap: 20px;             /* Space between monitor and leaderboard */
+            align-items: flex-start;
+        }
+
+        /* PC Screen Area - Takes most space */
+        .pc-screen-area {
+            flex: 2;               /* Takes 2/3 of space */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            min-height: 500px;
+        }
+
+        /* Leaderboard Panel - Outside monitor */
+        .leaderboard-panel {
+            flex: 1;               /* Takes 1/3 of space */
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
+            padding: 20px;
+            min-width: 250px;
+            max-width: 300px;
+            border: 2px solid #00d4ff;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+        }
+
+        .leaderboard-header {
+            color: #00d4ff;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #00d4ff;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+        }
+
+        .leaderboard-content {
+            color: #fff;
+            font-size: 0.9rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        /* Leaderboard table styling */
+        .leaderboard-content table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .leaderboard-content th {
+            color: #00d4ff;
+            padding: 8px 5px;
+            text-align: left;
+            font-size: 0.85rem;
+            border-bottom: 1px solid #00d4ff;
+        }
+
+        .leaderboard-content td {
+            padding: 6px 5px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.8rem;
+        }
+
+        .leaderboard-content tr:hover {
+            background: rgba(0, 212, 255, 0.1);
+        }
+
+        /* Responsive - Stack vertically on mobile */
+        @media (max-width: 768px) {
+            .game-container {
+                flex-direction: column;
+            }
+            
+            .leaderboard-panel {
+                max-width: 100%;
+                width: 100%;
+                order: 2;          /* Move below monitor on mobile */
+            }
+            
+            .pc-screen-area {
+                order: 1;
+                min-height: auto;
+            }
+        }
+
+        .pc-monitor {
+            width: 100%;
+            max-width: 700px;
+            aspect-ratio: 16/10;
+            background: #000;
+            border: 8px solid #333;
+            border-radius: 10px;
+            position: relative;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+        }
+
+        .pc-monitor::before {
+            content: '';
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 20px;
+            background: #333;
+            border-radius: 0 0 5px 5px;
+        }
+
+        .screen-content {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        /* Screen States */
+        .screen-off {
+            background: #000;
+        }
+
+        .screen-on {
+            background: #1a1a2e;
+        }
+
+        /* Registration Form */
+        .registration-form {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 320px;
+        }
+
+        .registration-form h2 {
+            margin-bottom: 20px;
+            text-align: center;
+            color: #00d4ff;
+        }
+
+        .registration-form input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: none;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            font-size: 1rem;
+        }
+
+        .registration-form input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .registration-form button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            background: #00d4ff;
+            color: #1a1a2e;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .registration-form button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+
+        .registration-form button:not(:disabled):hover {
+            background: #00a8cc;
+            transform: translateY(-2px);
+        }
+
+        /* Motherboard Logo */
+        .motherboard-logo {
+            text-align: center;
+            animation: pulse 1s infinite;
+        }
+
+        .motherboard-logo h2 {
+            font-size: 2rem;
+            color: #00ff88;
+            margin-bottom: 10px;
+        }
+
+        .motherboard-logo p {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        /* BIOS Interface */
+        .bios-screen {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #000080 0%, #000040 100%);
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            overflow-y: auto;  /* ADD THIS - enables vertical scroll */
+            overflow-x: hidden; /* Prevent horizontal scroll */
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+        }
+
+        .bios-header {
+            color: #ffff00;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #ffff00;
+            padding-bottom: 10px;
+        }
+
+        .bios-menu {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .bios-tab {
+            padding: 5px 15px;
+            background: #0000aa;
+            cursor: pointer;
+            color: #fff;
+        }
+
+        .bios-tab.active {
+            background: #aaaaff;
+            color: #000;
+        }
+
+        .bios-content {
+            color: #fff;
+            line-height: 1.8;
+        }
+
+        .boot-option {
+            margin: 10px 0;
+            padding: 5px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .bios-button {
+            margin-top: 20px;
+            padding: 8px 20px;
+            background: #aaaaff;
+            color: #000;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            min-height: 44px; /* Minimum touch target size */
+            font-size: 0.9rem;
+        }
+
+        .bios-button:disabled {
+            background: #666;
+            color: #999;
+            cursor: not-allowed;
+        }
+
+        .bios-error {
+            color: #ff6b6b;
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(255, 0, 0, 0.2);
+            border: 1px solid #ff6b6b;
+            display: none;
+        }
+
+        /* Windows Installer */
+        .installer-screen {
+            width: 100%;
+            height: 100%;
+            background: #fff;
+            color: #333;
+            padding: 20px;
+            overflow-y: auto; /* ADD THIS - enables vertical scroll */
+            -webkit-overflow-scrolling: touch; /* Smooth iOS scroll */
+        }
+
+        .installer-header {
+            background: #0078d4;
+            color: #fff;
+            padding: 15px;
+            margin: -20px -20px 20px -20px;
+            font-size: 1.2rem;
+        }
+
+        .installer-step {
+            margin-bottom: 20px;
+        }
+
+        .installer-step h3 {
+            margin-bottom: 15px;
+            color: #0078d4;
+        }
+
+        .installer-button {
+            padding: 10px 25px;
+            background: #0078d4;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            margin: 5px;
+            border-radius: 3px;
+        }
+
+        .installer-button:hover {
+            background: #005a9e;
+        }
+
+        .checkbox-container {
+            margin: 15px 0;
+        }
+
+        .drive-list {
+            border: 1px solid #ccc;
+            margin: 10px 0;
+        }
+
+        .drive-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+
+        .drive-item.selected {
+            background: #0078d4;
+            color: #fff;
+        }
+
+        .error-message {
+            color: #d32f2f;
+            background: #ffebee;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+            display: none;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            max-width: 400px;
+            margin: 20px auto;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #0078d4;
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        /* Completion Screen */
+        .completion-screen {
+            text-align: center;
+            color: #00ff88;
+        }
+
+        .completion-screen h2 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            animation: glow 2s infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { text-shadow: 0 0 10px #00ff88; }
+            50% { text-shadow: 0 0 30px #00ff88, 0 0 50px #00ff88; }
+        }
+
+        .score-display {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .score-display p {
+            margin: 10px 0;
+            font-size: 1.1rem;
+        }
+
+        /* Unplug Timer Warning */
+        .timer-warning {
+            color: #ff9800;
+            font-size: 1.5rem;
+            margin-top: 15px;
+            animation: blink 0.5s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* Controls Area */
+        .controls-area {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 20px;
+            border-radius: 15px 15px 0 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .controls-top {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        /* USB Selection */
+        .usb-selection {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .usb-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+        /* USB Status Indicator - NEW */
+        .usb-status {
+            background: #ff6b6b;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            margin: 5px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.3s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+
+        .usb-option.selected .usb-status {
+            background: #00ff88;
+            color: #1a1a2e;
+        }
+
+        .usb-option.selected .usb-icon {
+            color: #00ff88;
+            filter: drop-shadow(0 0 10px rgba(0, 255, 136, 0.5));
+        }
+
+        /* Better USB Icons - NEW */
+        .usb-option .usb-icon {
+            font-size: 3rem;
+            transition: all 0.3s;
+        }
+
+        .usb-option.selected {
+            background: rgba(0, 255, 136, 0.2);
+            border: 2px solid #00ff88;
+            transform: scale(1.05);
+        }
+
+        .usb-option {
+            transition: all 0.3s;
+            border: 2px solid transparent;
+            border-radius: 15px;
+            padding: 15px;
+        }        
+
+        .usb-option:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .usb-option.selected {
+            background: rgba(0, 255, 136, 0.2);
+            border: 2px solid #00ff88;
+        }
+
+        .usb-icon {
+            font-size: 3rem;
+        }
+
+        .usb-label {
+            font-size: 0.8rem;
+            color: #aaa;
+            text-align: center;
+        }
+
+        .usb-name {
+            font-size: 0.7rem;
+            color: #00d4ff;
+            font-weight: bold;
+        }
+
+        /* Power Button */
+        .power-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .power-button {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #ff6b6b, #c92a2a);
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4), inset 0 -3px 8px rgba(0, 0, 0, 0.3);
+            position: relative;
+            transition: transform 0.1s;
+        }
+
+        .power-button:active {
+            transform: scale(0.95);
+        }
+
+        .power-button::after {
+            content: '⏻';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2rem;
+            color: #fff;
+        }
+
+        .power-label {
+            font-size: 0.8rem;
+            color: #aaa;
+        }
+
+        /* Full Virtual Keyboard */
+        .keyboard-section {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .keyboard-label {
+            font-size: 0.9rem;
+            color: #00d4ff;
+            font-weight: bold;
+        }
+
+        .virtual-keyboard {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-width: 100%;
+            overflow-x: auto;
+        }
+
+        .keyboard-row {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            flex-wrap: nowrap;
+        }
+
+        .key {
+            min-width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #444 0%, #222 100%);
+            border: none;
+            border-radius: 5px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 0.85rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            transition: all 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 8px;
+        }
+
+        .key:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 3px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(135deg, #00d4ff 0%, #0078d4 100%);
+        }
+
+        .key.f2 {
+            background: linear-gradient(135deg, #ff6b6b 0%, #c92a2a 100%);
+            font-weight: bold;
+        }
+
+        .key.wide {
+            min-width: 60px;
+        }
+
+        .key.wider {
+            min-width: 80px;
+        }
+
+        .key.space {
+            min-width: 200px;
+        }
+
+        .key.esc {
+            background: linear-gradient(135deg, #666 0%, #444 100%);
+        }
+
+        .key.enter {
+            background: linear-gradient(135deg, #00ff88 0%, #00cc66 100%);
+            min-width: 70px;
+        }
+
+        /* Desktop Environment */
+        .desktop-environment {
+            width: 100%;
+            height: 100%;
+            background: #0078d4;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .desktop-icons {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            z-index: 10;
+        }
+
+        .desktop-icon {
+            width: 80px;
+            text-align: center;
+            cursor: pointer;
+            background: rgba(0,0,0,0.1);
+            border-radius: 5px;
+            padding: 5px;
+        }
+
+        .desktop-icon:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .desktop-icon-icon {
+            font-size: 2.5rem;
+            margin-bottom: 5px;
+        }
+
+        .desktop-icon-label {
+            font-size: 0.8rem;
+            color: #fff;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        .taskbar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            backdrop-filter: blur(5px);
+            z-index: 100;
+        }
+
+        .start-button {
+            background: #00a8e8;
+            color: white;
+            border: none;
+            padding: 5px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-right: 20px;
+        }
+
+        .start-button:hover {
+            background: #0078d4;
+        }
+
+        .start-menu {
+            position: absolute;
+            bottom: 45px;
+            left: 10px;
+            background: #2c2c2c;
+            border-radius: 8px;
+            width: 220px;
+            padding: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            z-index: 200;
+        }
+
+        .start-menu button {
+            display: block;
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            background: #3c3c3c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-align: left;
+        }
+
+        .start-menu button:hover {
+            background: #0078d4;
+        }
+
+        /* Black boot message screen */
+        .boot-message {
+            width: 100%;
+            height: 100%;
+            background: #000;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            font-size: 1.5rem;
+            gap: 20px;
+        }
+
+        /* Error Popup Overlay */
+        .error-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .error-popup {
+            background: #f44336;
+            color: white;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 10px;
+            text-align: center;
+            box-shadow: 0 0 10px black;
+            animation: fadeIn 0.3s;
+        }
+
+        /* Disk Management UI */
+        .disk-management {
+            width: 100%;
+            height: 100%;
+            background: #f0f0f0;
+            color: #333;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .disk-header {
+            background: #0078d4;
+            color: white;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+
+        .disk-map {
+            display: flex;
+            flex-direction: row;
+            margin: 20px 0;
+            border: 1px solid #ccc;
+            background: #e0e0e0;
+            min-height: 100px;
+        }
+
+        .disk-block {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            border: 1px solid #aaa;
+            background: #ffffff;
+            cursor: pointer;
+            transition: 0.2s;
+            position: relative;
+        }
+
+        .disk-block.selected {
+            background: #b0d4ff;
+            border: 2px solid #0078d4;
+        }
+
+        .disk-block.unallocated {
+            background: #ddd;
+            color: #666;
+            font-style: italic;
+        }
+
+        .action-panel {
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .action-panel button {
+            margin: 5px;
+            padding: 8px 15px;
+            background: #0078d4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .action-panel button:hover {
+            background: #005a9e;
+        }
+
+        /* Utility Classes */
+        .hidden {
+            display: none !important;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1rem; }
+            .move-counter, .phase-indicator { 
+                font-size: 0.7rem; 
+                padding: 4px 8px; 
+                position: static; 
+                display: inline-block; 
+                margin: 2px; 
+            }
+            .header { 
+                display: flex; 
+                flex-direction: column; 
+                align-items: center; 
+                gap: 5px; 
+            }
+            
+            /* FIX: Allow monitor to grow taller on mobile */
+            .pc-monitor { 
+                border-width: 4px; 
+                aspect-ratio: auto; /* Remove fixed aspect ratio */
+                min-height: 400px; /* Ensure minimum height */
+                height: 50vh; /* Use viewport height */
+                max-height: 600px;
+            }
+            
+            /* FIX: Ensure screen content can scroll */
+            .screen-content {
+                overflow-y: auto; /* Enable scroll */
+                height: 100%;
+            }
+            
+            .key { 
+                min-width: 28px; 
+                height: 32px; 
+                font-size: 0.65rem; 
+                padding: 0 4px; 
+            }
+            .key.space { min-width: 80px; }
+            .key.wide, .key.wider { min-width: 45px; }
+            .usb-icon { font-size: 2rem; }
+            .virtual-keyboard { padding: 8px; gap: 4px; }
+            .keyboard-row { gap: 3px; }
+            .controls-top { flex-direction: column; gap: 15px; }
+            .power-button { width: 50px; height: 50px; }
+            
+            /* FIX: Better BIOS scaling for mobile */
+            .bios-screen { 
+                font-size: 0.75rem; /* Slightly larger for readability */
+                padding: 15px; 
+            }
+            .bios-menu { 
+                gap: 8px; 
+                flex-wrap: wrap; 
+                margin-bottom: 15px;
+            }
+            .bios-tab {
+                padding: 8px 12px; /* Larger touch targets */
+                font-size: 0.8rem;
+            }
+            .bios-content {
+                line-height: 1.6; /* Better spacing */
+            }
+            .boot-option {
+                margin: 8px 0;
+                padding: 8px;
+                font-size: 0.8rem;
+            }
+            .bios-button {
+                width: 100%; /* Full width on mobile */
+                margin-top: 15px;
+                padding: 12px; /* Larger touch target */
+                font-size: 1rem;
+            }
+            
+            .disk-block { font-size: 0.7rem; padding: 5px; }
+            .installer-screen { padding: 10px; }
+            .installer-header { font-size: 1rem; padding: 10px; }
+            .registration-form { padding: 20px; width: 95%; }
+            .desktop-icon { width: 60px; }
+            .desktop-icon-icon { font-size: 2rem; }
+            .taskbar { height: 35px; }
+            .start-menu { width: 180px; bottom: 40px; }
+            .disk-management { padding: 10px; }
+            .action-panel button { 
+                padding: 10px 12px; /* Larger touch targets */
+                font-size: 0.85rem;
+                margin: 3px;
+            }
+            
+            /* FIX: PC Screen area adjustments */
+            .pc-screen-area {
+                min-height: auto;
+                padding: 10px;
+                width: 100%;
+            }
+            
+            /* FIX: Game container stack properly */
+            .game-container {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .leaderboard-panel {
+                max-width: 100%;
+                width: 100%;
+                order: 2;
+                max-height: 200px; /* Limit height on mobile */
+            }
+        }
+
+        @media (max-width: 480px) {
+            /* NEW: Add these for mobile monitor height fix */
+            .pc-monitor {
+                min-height: 350px;
+                height: 45vh;
+            }
+            
+            /* NEW: Add these for better BIOS scaling */
+            .bios-screen {
+                font-size: 0.7rem;
+                padding: 10px;
+            }
+            
+            .bios-header {
+                font-size: 0.8rem;
+                margin-bottom: 10px;
+                padding-bottom: 8px;
+            }
+            .key { min-width: 24px; height: 28px; font-size: 0.6rem; }
+            .key.space { min-width: 60px; }
+            .disk-map { flex-direction: column; }
+            .disk-block { border-bottom: 1px solid #aaa; border-right: none; }
+        }
+
+        body {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="phase-indicator" id="phaseIndicator">Registration</div>
+        <h1>🔧 Windows OS Installation Simulator</h1>
+        <div class="move-counter">Penalty Score: <span id="moveCount">0</span></div>
+    </div>
+
+    <div class="game-container">
+        <!-- Left side: PC Screen Area -->
+        <div class="pc-screen-area">
+            <div class="pc-monitor">
+                <div class="screen-content" id="screenContent"></div>
+            </div>
+        </div>
+        
+        <!-- Right side: Leaderboard (outside monitor) -->
+        <div class="leaderboard-panel" id="leaderboardPanel">
+            <div class="leaderboard-header">🏆 Leaderboard</div>
+            <div class="leaderboard-content" id="leaderboardContent">Loading...</div>
+        </div>
+    </div>
+
+    <!-- ADD THIS BACK: Controls Area -->
+    <div class="controls-area" id="controlsArea">
+        <div class="controls-top">
+            <div class="usb-selection" id="usbSelection">
+                <div class="usb-option" id="usbA" onclick="selectUSB('A')">
+                    <div class="usb-icon">🔌</div>
+                    <div class="usb-status" id="usbAStatus">PLUG IN</div>
+                    <span class="usb-name">USB A</span>
+                    <span class="usb-label">8 GB<br>Windows Installer</span>
+                </div>
+                <div class="usb-option" id="usbB" onclick="selectUSB('B')">
+                    <div class="usb-icon">🔌</div>
+                    <div class="usb-status" id="usbBStatus">PLUG IN</div>
+                    <span class="usb-name">USB B</span>
+                    <span class="usb-label">16 GB<br>Windows Explorer</span>
+                </div>
+            </div>
+            <div class="power-container">
+                <button class="power-button" id="powerButton" onclick="togglePower()"></button>
+                <span class="power-label">Power</span>
+            </div>
+        </div>
+        <div class="keyboard-section">
+            <span class="keyboard-label">⌨️ Virtual Keyboard - Press F2 during boot to enter BIOS</span>
+            <div class="virtual-keyboard" id="virtualKeyboard">
+                <div class="keyboard-row"><button class="key esc" onclick="genericKeyPress()">Esc</button><button class="key" onclick="genericKeyPress()">F1</button><button class="key f2" id="f2Key" onclick="pressF2()">F2</button><button class="key" onclick="genericKeyPress()">F3</button><button class="key" onclick="genericKeyPress()">F4</button><button class="key" onclick="genericKeyPress()">F5</button><button class="key" onclick="genericKeyPress()">F6</button><button class="key" onclick="genericKeyPress()">F7</button><button class="key" onclick="genericKeyPress()">F8</button><button class="key" onclick="genericKeyPress()">F9</button><button class="key" onclick="genericKeyPress()">F10</button><button class="key" onclick="genericKeyPress()">F11</button><button class="key" onclick="genericKeyPress()">F12</button></div>
+                <div class="keyboard-row"><button class="key" onclick="genericKeyPress()">`</button><button class="key" onclick="genericKeyPress()">1</button><button class="key" onclick="genericKeyPress()">2</button><button class="key" onclick="genericKeyPress()">3</button><button class="key" onclick="genericKeyPress()">4</button><button class="key" onclick="genericKeyPress()">5</button><button class="key" onclick="genericKeyPress()">6</button><button class="key" onclick="genericKeyPress()">7</button><button class="key" onclick="genericKeyPress()">8</button><button class="key" onclick="genericKeyPress()">9</button><button class="key" onclick="genericKeyPress()">0</button><button class="key" onclick="genericKeyPress()">-</button><button class="key" onclick="genericKeyPress()">=</button><button class="key wide" onclick="genericKeyPress()">⌫</button></div>
+                <div class="keyboard-row"><button class="key wide" onclick="genericKeyPress()">Tab</button><button class="key" onclick="genericKeyPress()">Q</button><button class="key" onclick="genericKeyPress()">W</button><button class="key" onclick="genericKeyPress()">E</button><button class="key" onclick="genericKeyPress()">R</button><button class="key" onclick="genericKeyPress()">T</button><button class="key" onclick="genericKeyPress()">Y</button><button class="key" onclick="genericKeyPress()">U</button><button class="key" onclick="genericKeyPress()">I</button><button class="key" onclick="genericKeyPress()">O</button><button class="key" onclick="genericKeyPress()">P</button><button class="key" onclick="genericKeyPress()">[</button><button class="key" onclick="genericKeyPress()">]</button><button class="key" onclick="genericKeyPress()">\</button></div>
+                <div class="keyboard-row"><button class="key wider" onclick="genericKeyPress()">Caps</button><button class="key" onclick="genericKeyPress()">A</button><button class="key" onclick="genericKeyPress()">S</button><button class="key" onclick="genericKeyPress()">D</button><button class="key" onclick="genericKeyPress()">F</button><button class="key" onclick="genericKeyPress()">G</button><button class="key" onclick="genericKeyPress()">H</button><button class="key" onclick="genericKeyPress()">J</button><button class="key" onclick="genericKeyPress()">K</button><button class="key" onclick="genericKeyPress()">L</button><button class="key" onclick="genericKeyPress()">;</button><button class="key" onclick="genericKeyPress()">'</button><button class="key enter" onclick="genericKeyPress()">Enter</button></div>
+                <div class="keyboard-row"><button class="key wider" onclick="genericKeyPress()">Shift</button><button class="key" onclick="genericKeyPress()">Z</button><button class="key" onclick="genericKeyPress()">X</button><button class="key" onclick="genericKeyPress()">C</button><button class="key" onclick="genericKeyPress()">V</button><button class="key" onclick="genericKeyPress()">B</button><button class="key" onclick="genericKeyPress()">N</button><button class="key" onclick="genericKeyPress()">M</button><button class="key" onclick="genericKeyPress()">,</button><button class="key" onclick="genericKeyPress()">.</button><button class="key" onclick="genericKeyPress()">/</button><button class="key wider" onclick="genericKeyPress()">Shift</button></div>
+                <div class="keyboard-row"><button class="key" onclick="genericKeyPress()">Ctrl</button><button class="key" onclick="genericKeyPress()">Win</button><button class="key" onclick="genericKeyPress()">Alt</button><button class="key space" onclick="genericKeyPress()">Space</button><button class="key" onclick="genericKeyPress()">Alt</button><button class="key" onclick="genericKeyPress()">Fn</button><button class="key" onclick="genericKeyPress()">Ctrl</button></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="errorOverlay" class="error-overlay"><div id="errorMessages"></div></div>
+
+    <script>
+        // ANTI-CHEAT & SAVE/LOAD (abbreviated for length but fully functional)
+        document.addEventListener('contextmenu', (e) => e.preventDefault());
+        document.addEventListener('keydown', (e) => { if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I') || (e.ctrlKey && e.key === 'u') || (e.ctrlKey && e.key === 's')) { e.preventDefault(); incrementMoves(1); triggerErrorSpam('Cheat detected! +1 penalty.'); return false; } });
+        let devtoolsOpen = false; setInterval(() => { let widthDiff = window.outerWidth - window.innerWidth > 160; let heightDiff = window.outerHeight - window.innerHeight > 160; if ((widthDiff || heightDiff) && !devtoolsOpen) { devtoolsOpen = true; incrementMoves(2); triggerErrorSpam('Developer tools detected! +2 penalty.'); } else if (!(widthDiff || heightDiff)) devtoolsOpen = false; }, 1000);
+        
+        let gameState = {
+            phase: 'registration', moves: 0, playerName: '', playerClass: '', playerEmail: '', usbPlugged: false, usbType: null, powerOn: false, bootTiming: false, biosBootOrder: 'hardDrive',
+            installerStep: 0, driveSelected: null, driveFormatted: false, installationComplete: false, unplugTimer: null, waitingForUnplug: false, isUpdated: false, diskLayout: [],
+            selectedBlockIndex: null, lockoutActive: false, lockoutTimer: null, desktopPhaseActive: false, currentQuiz: 0,
+            questFlags: { createdPlayerPartition: false, mergedDE: false, mergedPlayerWithD: false },
+            originalESize: 60, pendingDeleteForMerge: null
+        };
+        function incrementMoves(c=0) { gameState.moves += c; document.getElementById('moveCount').textContent = gameState.moves; saveGameState(); }
+        function updatePhaseIndicator(p) { const i = document.getElementById('phaseIndicator'); const names = { registration:'Registration', hardware:'Hardware Setup', bios:'BIOS Configuration', installer:'Windows Installation', desktop:'Desktop Phase', quiz:'Knowledge Quiz', final:'Complete' }; i.textContent = names[p] || p; }
+        function saveGameState() { 
+            if (gameState.phase !== 'registration' && gameState.phase !== 'final') {
+                // Never save lockout state - always reset on load
+                const stateToSave = { 
+                    ...gameState, 
+                    unplugTimer: null, 
+                    lockoutTimer: null,
+                    lockoutActive: false  // FIX: Always save as false
+                };
+                localStorage.setItem('winSimSave', JSON.stringify(stateToSave)); 
+            }
+        }
+        function loadGameState() { 
+            const s = localStorage.getItem('winSimSave'); 
+            if(s) try { 
+                const d = JSON.parse(s); 
+                Object.assign(gameState, d); 
+                
+                // FIX: Reset lockout state on load since timer was cleared
+                gameState.lockoutActive = false;
+                if (gameState.lockoutTimer) {
+                    clearTimeout(gameState.lockoutTimer);
+                    gameState.lockoutTimer = null;
+                }
+                
+                // FIX: Ensure questFlags exists for backward compatibility
+                if(gameState.questFlags === undefined) {
+                    gameState.questFlags = { createdPlayerPartition: false, mergedDE: false, mergedPlayerWithD: false };
+                }
+                
+                // FIX: Ensure desktopPhaseActive is set when in desktop phase
+                if (gameState.phase === 'desktop') {
+                    gameState.desktopPhaseActive = true;
+                }
+                
+                document.getElementById('moveCount').textContent = gameState.moves; 
+                updateUSBSelection(); 
+                
+                if(gameState.phase === 'hardware') renderHardwarePhase(); 
+                else if(gameState.phase === 'bios') renderBIOS(); 
+                else if(gameState.phase === 'installer') renderInstaller(); 
+                else if(gameState.phase === 'desktop') { 
+                    document.getElementById('controlsArea').style.display = 'none'; 
+                    renderDesktopEnvironment(); 
+                } else if(gameState.phase === 'quiz') renderQuiz(); 
+                else if(gameState.phase === 'final') showFinalSubmission(); 
+                else renderRegistration(); 
+                
+                return true; 
+            } catch(e){
+                console.error("Load failed:", e);
+            } 
+            return false; 
+        }
+        function resetGame() { localStorage.removeItem('winSimSave'); location.reload(); }
+        
+        // Registration & core phases (unchanged skeleton except disk management)
+        function renderRegistration() { 
+            updatePhaseIndicator('registration'); 
+            const screen = document.getElementById('screenContent'); 
+            screen.innerHTML = `
+                <div style="display:flex;flex-direction:column;align-items:center;gap:20px;padding:10px;">
+                    <div class="registration-form fade-in">
+                        <h2>🎮 Player Registration</h2>
+                        <input type="text" id="playerName" placeholder="Your Name" oninput="validateRegistration()">
+                        <input type="text" id="playerClass" placeholder="Your Class" oninput="validateRegistration()">
+                        <input type="email" id="playerEmail" placeholder="Your Email" oninput="validateRegistration()">
+                        <button id="startBtn" onclick="startGame()" disabled>Start Game</button>
+                        <button id="resetBtn" onclick="resetGame()" style="background:#ff9800; margin-top:10px;">Reset Game</button>
+                    </div>
+                </div>
+            `; 
+            loadLeaderboard();  // This now updates the external panel
+        }
+        function validateRegistration() { const name=document.getElementById('playerName').value.trim(), cls=document.getElementById('playerClass').value.trim(), email=document.getElementById('playerEmail').value.trim(); document.getElementById('startBtn').disabled = !(name && cls && email); }
+        function startGame() { gameState.playerName=document.getElementById('playerName').value.trim(); gameState.playerClass=document.getElementById('playerClass').value.trim(); gameState.playerEmail=document.getElementById('playerEmail').value.trim(); gameState.phase='hardware'; incrementMoves(0); renderHardwarePhase(); saveGameState(); }
+        function renderHardwarePhase() { updatePhaseIndicator('hardware'); const screen=document.getElementById('screenContent'); if(!gameState.powerOn) { screen.className='screen-content screen-off'; screen.innerHTML=''; } else { screen.className='screen-content screen-on'; screen.innerHTML=`<div class="motherboard-logo fade-in"><h2>⚡ MOTHERBOARD</h2><p>Press F2 to enter BIOS...</p><p style="font-size:0.8rem;margin-top:10px;">(You have 3 seconds!)</p></div>`; startBootTiming(); } saveGameState(); }
+        function startBootTiming() { gameState.bootTiming=true; setTimeout(()=>{ if(gameState.bootTiming && gameState.phase==='hardware') { gameState.bootTiming=false; renderDesktop(); } },3000); }
+        function renderDesktop() { const screen=document.getElementById('screenContent'); screen.innerHTML=`<div class="desktop-screen fade-in"><div class="desktop-icons"><div class="desktop-icon"><div class="desktop-icon-icon">🖥️</div><div class="desktop-icon-label">This PC</div></div><div class="desktop-icon"><div class="desktop-icon-icon">🗑️</div><div class="desktop-icon-label">Recycle Bin</div></div></div><button class="shutdown-button" onclick="shutdownPC()">Shut Down</button></div>`; saveGameState(); }
+        function shutdownPC() { incrementMoves(0); gameState.powerOn=false; renderHardwarePhase(); }
+        function renderBIOS() { 
+            updatePhaseIndicator('bios'); 
+            const screen=document.getElementById('screenContent'); 
+            screen.innerHTML=`<div class="bios-screen fade-in"><div class="bios-header">BIOS Setup Utility<br>Version 2.4.1 | Release Date: 01/15/2024</div><div class="bios-menu"><div class="bios-tab active" onclick="switchBiosTab('main')">Main</div><div class="bios-tab" onclick="switchBiosTab('boot')">Boot</div><div class="bios-tab" onclick="switchBiosTab('exit')">Save & Exit</div></div><div class="bios-content" id="biosContent">${renderMainTab()}</div><div class="bios-error" id="biosError"></div></div>`; 
+            saveGameState(); 
+        }
+        function renderBootTab() { 
+            const hasUSB=gameState.usbPlugged&&gameState.usbType; 
+            const usbFullName = gameState.usbType==='A'?'USB A (8GB Windows Installer)':'USB B (16GB Windows Explorer)';
+            const usbOption=hasUSB?`<div class="boot-option">Boot Option #2: ${usbFullName}</div>`:`<div class="boot-option">Boot Option #2: [Not Present]</div>`; 
+            
+            // FIX: Show full USB name in Boot Option 1 when USB is first
+            let bootOption1Text = 'Hard Drive';
+            if (gameState.biosBootOrder==='usb' && hasUSB) {
+                bootOption1Text = usbFullName;
+            } else if (gameState.biosBootOrder==='usb') {
+                bootOption1Text = 'USB Drive (Not Connected)';
+            }
+            
+            const swapDisabled=!hasUSB?'disabled':''; 
+            return `<div class="boot-option">Boot Option #1: ${bootOption1Text}</div>${usbOption}<button class="bios-button" onclick="swapBootOrder()" ${swapDisabled}>Swap Boot Order</button>${!hasUSB?'<p style="color:#ff9800; margin-top:10px;">⚠️ Connect a USB drive</p>':''}`; 
+        }
+        function renderMainTab() { return `<div>System Time: ${new Date().toLocaleTimeString()}</div><div>System Date: ${new Date().toLocaleDateString()}</div><div>Total Memory: 16384 MB</div><div>Processor: Intel Core i7</div><div>USB Device: ${gameState.usbPlugged?(gameState.usbType==='A'?'USB A (8GB)':'USB B (16GB)'):'None detected'}</div>`; }
+        function renderExitTab() { return `<div>Save configuration changes and exit?</div><p style="margin:10px 0; color:${gameState.biosBootOrder==='usb'?'#00ff88':'#ff9800'};">Current Boot Order: ${gameState.biosBootOrder==='usb'?'USB First':'Hard Drive First'}</p><button class="bios-button" onclick="saveAndExit()">Save Changes and Exit</button>`; }
+        function switchBiosTab(tab) { incrementMoves(0); const tabs=document.querySelectorAll('.bios-tab'); tabs.forEach(t=>t.classList.remove('active')); event.target.classList.add('active'); const content=document.getElementById('biosContent'); if(tab==='main') content.innerHTML=renderMainTab(); else if(tab==='boot') content.innerHTML=renderBootTab(); else if(tab==='exit') content.innerHTML=renderExitTab(); }
+        function swapBootOrder() { incrementMoves(0); gameState.biosBootOrder=gameState.biosBootOrder==='hardDrive'?'usb':'hardDrive'; document.getElementById('biosContent').innerHTML=renderBootTab(); saveGameState(); }
+        function saveAndExit() { 
+            incrementMoves(0); 
+            if(gameState.usbType==='B' && gameState.biosBootOrder==='usb') { 
+                const errorDiv=document.getElementById('biosError'); 
+                errorDiv.textContent='❌ INVALID BOOTING: Windows Explorer USB cannot boot. Please turn off and try again with the correct USB. (+1 penalty)'; 
+                errorDiv.style.display='block'; 
+                incrementMoves(1); // ADD THIS LINE - actually add the penalty!
+                setTimeout(()=>{ 
+                    gameState.powerOn=false; 
+                    gameState.phase='hardware'; 
+                    renderHardwarePhase(); 
+                },2000); 
+                return; 
+            } 
+            if(gameState.biosBootOrder==='usb' && gameState.usbPlugged && gameState.usbType==='A') {
+                showBootTransition(); 
+            } else { 
+                alert('Invalid boot configuration! Booting to desktop...'); 
+                renderDesktop(); 
+            } 
+            saveGameState(); 
+        }
+        function showInstallationCrash() {
+            const screen = document.getElementById('screenContent');
+            screen.innerHTML = `
+                <div style="background:#000;color:#ff0000;width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:20px;font-family:'Courier New',monospace;">
+                    <div style="font-size:4rem;">⚠️</div>
+                    <h2 style="color:#ff0000;margin-bottom:10px;">CRITICAL ERROR</h2>
+                    <p style="color:#fff;margin-bottom:10px;">USB removed during installation!</p>
+                    <p style="color:#ff9800;">System halted. (+2 penalty)</p>
+                    <p style="color:#666;margin-top:30px;font-size:0.9rem;">Shutting down...</p>
+                </div>
+            `;
+            
+            // Shutdown after 3 seconds - reset to hardware phase (not registration!)
+            setTimeout(() => {
+                gameState.powerOn = false;
+                gameState.usbPlugged = false;
+                gameState.usbType = null;
+                gameState.phase = 'hardware'; // Back to hardware phase, not registration
+                renderHardwarePhase(); // Show powered off PC
+            }, 3000);
+        }        
+        function showBootTransition() { const screen=document.getElementById('screenContent'); screen.innerHTML=`<div style="width:100%;height:100%;background:#000;color:#fff;display:flex;flex-direction:column;justify-content:center;align-items:center;font-family:'Courier New',monospace;"><div style="text-align:left;max-width:80%;"><p>Booting from USB...</p><p style="color:#00ff00;">✓ USB Device Found: Windows Installer</p><p>Loading files...</p><p style="color:#00ff00;">✓ BOOTMGR loaded</p><p style="color:#00ff00;">✓ winload.exe loaded</p><p>Starting Windows Setup...</p><div style="margin-top:20px;color:#00d4ff;animation:pulse 1s infinite;">Please wait...</div></div></div>`; setTimeout(()=>{ gameState.phase='installer'; renderInstaller(); saveGameState(); },4000); }
+        function renderInstaller() { updatePhaseIndicator('installer'); const screen=document.getElementById('screenContent'); screen.innerHTML=`<div class="installer-screen fade-in"><div class="installer-header">Windows Setup</div><div id="installerContent">${renderInstallerStep()}</div></div>`; saveGameState(); }
+        function renderInstallerStep() { switch(gameState.installerStep) { case 0: return `<div class="installer-step"><h3>Language, Time and Keyboard</h3><p>Language: English (United States)</p><p>Time format: English (United States)</p><p>Keyboard: US</p><button class="installer-button" onclick="nextInstallerStep()">Next</button></div>`; case 1: return `<div class="installer-step"><h3>Install Now</h3><p>Click "Install Now" to begin installation.</p><button class="installer-button" onclick="nextInstallerStep()">Install Now</button></div>`; case 2: return `<div class="installer-step"><h3>License Terms</h3><div class="checkbox-container"><label><input type="checkbox" id="acceptLicense"> I accept the license terms</label></div><button class="installer-button" onclick="acceptLicense()">Next</button></div>`; case 3: return `<div class="installer-step"><h3>Type of Installation</h3><p>Choose the type of installation you want:</p><button class="installer-button" onclick="selectInstallType('upgrade')">Upgrade: Install Windows and keep files</button><button class="installer-button" onclick="selectInstallType('custom')">Custom: Install Windows only (advanced)</button><div class="error-message" id="installTypeError"></div></div>`; case 4: return renderDiskSelection(); case 5: return `<div class="installer-step"><h3>Installing Windows...</h3><div class="progress-container"><div class="progress-bar"><div class="progress-fill" id="installProgress"></div></div></div><p style="text-align:center; margin-top:10px;">Please wait...</p></div>`; default: return ''; } }
+        function renderDiskSelection() { return `<div class="installer-step"><h3>Where do you want to install Windows?</h3><div class="drive-list"><div class="drive-item ${gameState.driveSelected===0?'selected':''}" onclick="selectDrive(0)">Drive 0 : Data C - ${gameState.driveFormatted?'Unallocated Space':'Primary Partition'}</div><div class="drive-item ${gameState.driveSelected===1?'selected':''}" onclick="selectDrive(1)">Drive 1 : Data D - Primary Partition</div><div class="drive-item ${gameState.driveSelected===2?'selected':''}" onclick="selectDrive(2)">Drive 2 : Data E - Primary Partition</div></div><button class="installer-button" onclick="formatDrive()">Format</button><button class="installer-button" onclick="confirmDiskSelection()">Next</button><div class="error-message" id="diskError"></div></div>`; }
+        function nextInstallerStep() { incrementMoves(0); gameState.installerStep++; renderInstaller(); saveGameState(); }
+        function acceptLicense() { incrementMoves(0); if(document.getElementById('acceptLicense').checked) { gameState.installerStep++; renderInstaller(); saveGameState(); } else alert('Please accept the license terms to continue.'); }
+        function selectInstallType(type) { incrementMoves(0); const errorDiv=document.getElementById('installTypeError'); if(type==='custom') { errorDiv.style.display='none'; gameState.installerStep++; renderInstaller(); saveGameState(); } else { incrementMoves(2); errorDiv.textContent='❌ Error: Upgrade is not available. Select "Custom".'; errorDiv.style.display='block'; } }
+        function selectDrive(d) { incrementMoves(0); gameState.driveSelected=d; renderInstaller(); saveGameState(); }
+        function formatDrive() { incrementMoves(0); if(gameState.driveSelected===0) { gameState.driveFormatted=true; renderInstaller(); saveGameState(); } else alert('Please select the right partition to format.'); }
+        function confirmDiskSelection() { incrementMoves(0); const errorDiv=document.getElementById('diskError'); if(gameState.driveSelected===0 && gameState.driveFormatted) { errorDiv.style.display='none'; gameState.installerStep++; renderInstaller(); simulateInstallation(); saveGameState(); } else { incrementMoves(2); errorDiv.textContent='Error: maaf boss gk gitu mainnya!'; errorDiv.style.display='block'; } }
+        function simulateInstallation() { let progress=0; const interval=setInterval(()=>{ progress+=Math.random()*15; if(progress>=100) { progress=100; clearInterval(interval); showRebootAndUnplug(); } const pf=document.getElementById('installProgress'); if(pf) pf.style.width=progress+'%'; },300); }
+        function showRebootAndUnplug() { const screen=document.getElementById('screenContent'); screen.innerHTML=`<div style="background:#000; color:#fff; width:100%; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;"><div style="font-size:2rem;">⚠️</div><p>Windows has been installed. The system will reboot in 3 seconds...</p><p style="color:#ff9800; margin-top:20px;">Please unplug the USB drive NOW!</p><div id="unplugTimer" class="timer-warning">3</div></div>`; gameState.waitingForUnplug=true; let timer=3; const timerDiv=document.getElementById('unplugTimer'); gameState.unplugTimer=setInterval(()=>{ timer--; if(timerDiv) timerDiv.innerText=timer; if(timer<=0) { clearInterval(gameState.unplugTimer); if(gameState.waitingForUnplug) { gameState.waitingForUnplug=false; incrementMoves(2); triggerErrorSpam('You forgot to unplug the USB! Installation restarted. (+2 penalty)'); gameState.installerStep=0; gameState.driveFormatted=false; gameState.driveSelected=null; gameState.phase='installer'; renderInstaller(); } } },1000); }
+        window.selectUSB = function(type) { 
+            if(gameState.phase==='installer' && gameState.waitingForUnplug) { 
+                if(gameState.usbPlugged) { 
+                    clearInterval(gameState.unplugTimer); 
+                    gameState.waitingForUnplug=false; 
+                    gameState.usbPlugged=false; 
+                    gameState.usbType=null; 
+                    updateUSBSelection(); 
+                    showBootMessage(); 
+                    return; 
+                } 
+            } 
+            if(gameState.phase==='installer' && !gameState.waitingForUnplug) { 
+                incrementMoves(2); // ADD PENALTY for unplugging during installation
+                showInstallationCrash(); // NEW: Custom shutdown instead of fatal error
+                return; 
+            }
+            if(gameState.usbPlugged) { 
+                // Unplug current USB
+                incrementMoves(0); 
+                gameState.usbPlugged=false; 
+                gameState.usbType=null; 
+                updateUSBSelection(); 
+                if(gameState.waitingForUnplug) { 
+                    clearInterval(gameState.unplugTimer); 
+                    gameState.waitingForUnplug=false; 
+                    gameState.installationComplete=true; 
+                    setTimeout(showBootMessage,500); 
+                } 
+                return; 
+            } 
+            // Plug in USB
+            incrementMoves(0); 
+            gameState.usbPlugged=true; 
+            gameState.usbType=type; 
+            updateUSBSelection(); 
+            saveGameState(); 
+        };
+
+        function updateUSBSelection() { 
+            const a=document.getElementById('usbA'), 
+                b=document.getElementById('usbB'),
+                aStatus=document.getElementById('usbAStatus'),
+                bStatus=document.getElementById('usbBStatus');
+            
+            // Reset both
+            if(a) {
+                a.classList.remove('selected'); 
+                aStatus.textContent = 'PLUG IN';
+                aStatus.style.background = '#ff6b6b';
+            }
+            if(b) {
+                b.classList.remove('selected'); 
+                bStatus.textContent = 'PLUG IN';
+                bStatus.style.background = '#ff6b6b';
+            }
+            
+            // Set selected state
+            if(gameState.usbPlugged) { 
+                if(gameState.usbType==='A') {
+                    a.classList.add('selected');
+                    aStatus.textContent = 'PLUG OUT';
+                    aStatus.style.background = '#00ff88';
+                } else if(gameState.usbType==='B') {
+                    b.classList.add('selected');
+                    bStatus.textContent = 'PLUG OUT';
+                    bStatus.style.background = '#00ff88';
+                }
+            }
+        }
+        function showBootMessage() { const screen=document.getElementById('screenContent'); screen.innerHTML=`<div class="boot-message"><div>hello..</div><div>we'll make sure everything ready for you</div></div>`; setTimeout(()=>startDesktopPhase(),3000); }
+        
+        // ========== DESKTOP PHASE WITH FIXED QUESTS ==========
+        function startDesktopPhase() {
+            gameState.phase='desktop'; gameState.isUpdated=false; gameState.desktopPhaseActive=true;
+            gameState.diskLayout = [
+                { name: "C:", size: 100, type: "partition" },
+                { name: "D:", size: 80, type: "partition" },
+                { name: "E:", size: 60, type: "partition" }
+            ];
+            gameState.selectedBlockIndex=null;
+            gameState.questFlags = { createdPlayerPartition: false, mergedDE: false, mergedPlayerWithD: false };
+            gameState.originalESize = 60;
+            document.getElementById('controlsArea').style.display='none';
+            renderDesktopEnvironment();
+            saveGameState();
+        }
+        function renderDesktopEnvironment() { updatePhaseIndicator('desktop'); const screen=document.getElementById('screenContent'); screen.innerHTML=`<div class="desktop-environment"><div class="desktop-icons"><div class="desktop-icon"><div class="desktop-icon-icon">🖥️</div><div class="desktop-icon-label">My PC</div></div><div class="desktop-icon"><div class="desktop-icon-icon">🗑️</div><div class="desktop-icon-label">Recycle Bin</div></div></div><div class="taskbar"><button class="start-button" onclick="toggleStartMenu()">Start</button></div><div id="startMenu" style="display: none;" class="start-menu"><button onclick="windowsUpdate()">Windows Update</button><button onclick="openDiskManagement()">Disk Management</button></div></div>`; saveGameState(); }
+        function toggleStartMenu() { incrementMoves(0); const menu=document.getElementById('startMenu'); if(menu) menu.style.display=menu.style.display==='none'?'block':'none'; }
+        function triggerErrorSpam(msg) { if(gameState.lockoutActive) return; gameState.lockoutActive=true; const overlay=document.getElementById('errorOverlay'); const container=document.getElementById('errorMessages'); container.innerHTML=''; const popup=document.createElement('div'); popup.className='error-popup'; popup.innerText=msg||'Error: Feature unavailable. Please update Windows first.'; container.appendChild(popup); incrementMoves(1); overlay.style.display='flex'; gameState.lockoutTimer=setTimeout(()=>{ overlay.style.display='none'; gameState.lockoutActive=false; },3000); }
+        function showFatalError(msg,shutdown=false) { const screen=document.getElementById('screenContent'); screen.innerHTML=`<div style="background:#000;color:#ff0000;width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:20px;"><div style="font-size:4rem;">⚠️</div><h2 style="color:#ff0000;">FATAL ERROR</h2><p>${msg}</p><p style="margin-top:30px;color:#666;">System will shutdown...</p></div>`; if(shutdown) setTimeout(()=>{ gameState.phase='registration'; gameState.powerOn=false; gameState.usbPlugged=false; gameState.usbType=null; gameState.installerStep=0; gameState.driveFormatted=false; gameState.driveSelected=null; gameState.installationComplete=false; renderRegistration(); },3000); }
+        function windowsUpdate() { if(gameState.lockoutActive) return; incrementMoves(0); const menu=document.getElementById('startMenu'); if(menu) menu.style.display='none'; const screen=document.getElementById('screenContent'); screen.innerHTML=`<div class="desktop-environment"><div class="taskbar"><button class="start-button" onclick="toggleStartMenu()">Start</button></div><div style="display:flex;justify-content:center;align-items:center;height:80%;"><div style="background:white;padding:20px;border-radius:8px;text-align:center;"><h3>Windows Update</h3><div class="progress-container"><div class="progress-bar"><div class="progress-fill" id="updateProgress"></div></div></div><p>Checking for updates...</p></div></div></div>`; let progress=0; const updateFill=document.getElementById('updateProgress'); const interval=setInterval(()=>{ progress+=33; if(updateFill) updateFill.style.width=Math.min(progress,100)+'%'; if(progress>=100) { clearInterval(interval); setTimeout(()=>{ gameState.isUpdated=true; alert('Windows updated! Restart complete.'); renderDesktopEnvironment(); saveGameState(); },500); } },300); }
+        function openDiskManagement() { if(gameState.lockoutActive) return; incrementMoves(0); if(!gameState.isUpdated) { triggerErrorSpam('Please update Windows first.'); return; } renderDiskManagement(); }
+        function renderDiskManagement() {
+            const screen=document.getElementById('screenContent');
+            let diskBlocksHtml='';
+            gameState.diskLayout.forEach((block,idx)=>{
+                const isSelected=(idx===gameState.selectedBlockIndex);
+                const extraClass=block.type==='unallocated'?'unallocated':'';
+                const nameDisplay=block.type==='unallocated'?'Unallocated':block.name;
+                diskBlocksHtml+=`<div class="disk-block ${extraClass} ${isSelected?'selected':''}" onclick="selectDiskBlock(${idx})"><strong>${nameDisplay}</strong><br>${block.size} GB</div>`;
+            });
+            const playerName=gameState.playerName.toUpperCase();
+            const q1done=gameState.questFlags.createdPlayerPartition;
+            const q2done=gameState.questFlags.mergedDE;
+            const q3done=gameState.questFlags.mergedPlayerWithD;
+            screen.innerHTML=`
+                <div class="disk-management">
+                    <div class="disk-header">Disk Management</div>
+                    <div class="disk-map">${diskBlocksHtml}</div>
+                    <div class="action-panel">
+                        <button onclick="shrinkVolume()">Shrink Volume</button>
+                        <button onclick="deleteVolume()">Delete Volume</button>
+                        <button onclick="extendVolume()">Extend Volume</button>
+                        <button onclick="newSimpleVolume()">New Simple Volume</button>
+                    </div>
+                    <div style="background:#fff3cd; border:2px solid #ffc107; border-radius:8px; padding:15px; margin:20px 0; color:#333;">
+                        <h4 style="margin-bottom:10px; color:#856404;">🎯 Quest Objectives:</h4>
+                        <div style="margin:8px 0; ${q1done?'text-decoration:line-through; color:#28a745;':'color:#333;'}">${q1done?'✅':'⬜'} 1. Bagi partisi C menjadi 2 dan namai partisi baru dengan nama "${playerName}"!</div>
+                        <div style="margin:8px 0; ${q2done?'text-decoration:line-through; color:#28a745;':'color:#333;'}">${q2done?'✅':'⬜'} 2. Gabungkan partisi D dan E!</div>
+                        <div style="margin:8px 0; ${q3done?'text-decoration:line-through; color:#28a745;':'color:#333;'}">${q3done?'✅':'⬜'} 3. Gabungkan partisi "${playerName}" dan D yang sudah digabung dengan E tadi!</div>
+                    </div>
+                    <button onclick="closeDiskManagement()" style="margin-right:10px;">Close</button>
+                    <button id="finishBtn" onclick="finishDiskQuest()" ${!(q1done && q2done && q3done)?'disabled':''} style="background:${(q1done && q2done && q3done)?'#28a745':'#6c757d'}; color:white; padding:10px 25px; font-weight:bold;">${(q1done && q2done && q3done)?'✅ Finish Quest':'🔒 Complete Quests First'}</button>
+                </div>
+            `;
+        }
+        function selectDiskBlock(idx) { if(gameState.lockoutActive) return; incrementMoves(0); gameState.selectedBlockIndex=idx; renderDiskManagement(); }
+        function shrinkVolume() { 
+            if(gameState.lockoutActive) return; 
+            const sel=gameState.selectedBlockIndex; 
+            if(sel===null){ 
+                triggerErrorSpam('No volume selected.'); 
+                return; 
+            } 
+            const block=gameState.diskLayout[sel]; 
+            if(block.name!=='C:' || block.size<=30){ 
+                triggerErrorSpam('Sorry you cannot do this right now'); 
+                return; 
+            } 
+            incrementMoves(0); 
+            const shrinkSize=30; 
+            block.size-=shrinkSize; 
+            
+            // FIX: Mark this unallocated space as originating from C:
+            const unallocated={ 
+                name:"", 
+                size:shrinkSize, 
+                type:"unallocated",
+                source: 'C'  // Track that this came from C drive
+            }; 
+            gameState.diskLayout.splice(sel+1,0,unallocated); 
+            gameState.selectedBlockIndex=null; 
+            renderDiskManagement(); 
+            saveGameState(); 
+        }
+        function newSimpleVolume() { 
+            if(gameState.lockoutActive) return; 
+            
+            const sel = gameState.selectedBlockIndex; 
+            if(sel === null) { 
+                triggerErrorSpam('No unallocated space selected.'); 
+                return; 
+            } 
+            
+            const block = gameState.diskLayout[sel]; 
+            if(block.type !== 'unallocated') { 
+                triggerErrorSpam('New volume can only be created on unallocated space.'); 
+                return; 
+            } 
+            
+            const playerName = gameState.playerName.toUpperCase();
+            const cIndex = gameState.diskLayout.findIndex(b => b.name === 'C:');
+            const dIndex = gameState.diskLayout.findIndex(b => b.name === 'D:');
+            const eIndex = gameState.diskLayout.findIndex(b => b.name === 'E:');
+            
+            // FIX: Only check for E's space if E has been deleted (eIndex === -1) 
+            // AND D still exists (dIndex !== -1) 
+            // AND D+E haven't been merged yet (!gameState.questFlags.mergedDE)
+            if (eIndex === -1 && dIndex !== -1 && !gameState.questFlags.mergedDE) {
+                // E is deleted, D exists, not merged yet - check if selected space is E's former space
+                // E's space would be at dIndex + 1 (right after D)
+                const eSpaceIndex = dIndex + 1;
+                
+                if (sel === eSpaceIndex) {
+                    incrementMoves(2);
+                    triggerErrorSpam('❌ Quest Order Violation: You must merge D and E (Quest 2) before creating your named partition! You cannot create a new volume from E\'s space yet. (+2 penalty)');
+                    return;
+                }
+            }
+            
+            // Additional check: Only allow creating player partition from C's shrink space
+            // The player partition should only be created from space immediately after C:
+            if (sel !== cIndex + 1) {
+                triggerErrorSpam('❌ You can only create your named partition from unallocated space immediately after C: drive. Shrink C: first!');
+                return;
+            }
+            
+            incrementMoves(0); 
+            
+            const volName = prompt(`Enter volume name (must be your name: "${playerName}"):`, playerName); 
+            
+            if(volName && volName.toUpperCase() === playerName) { 
+                block.name = volName.toUpperCase(); 
+                block.type = "partition"; 
+                gameState.selectedBlockIndex = null; 
+                if(!gameState.questFlags.createdPlayerPartition) {
+                    gameState.questFlags.createdPlayerPartition = true;
+                }
+                renderDiskManagement(); 
+                saveGameState(); 
+            } else { 
+                triggerErrorSpam(`Invalid name. Must be "${playerName}".`); 
+            } 
+        }
+        function deleteVolume() { 
+            if(gameState.lockoutActive) return; 
+            const sel=gameState.selectedBlockIndex; 
+            if(sel===null){ 
+                triggerErrorSpam('No volume selected.'); 
+                return; 
+            } 
+            const block=gameState.diskLayout[sel]; 
+            if(block.type!=='partition'){ 
+                triggerErrorSpam('Only partitions can be deleted.'); 
+                return; 
+            } 
+            if(block.name==='E:'){ 
+                incrementMoves(0); 
+                // FIX: Mark this as E's unallocated space
+                gameState.diskLayout[sel]={ 
+                    name:"", 
+                    size:block.size, 
+                    type:"unallocated",
+                    source: 'E'  // Track that this came from E drive
+                }; 
+                gameState.selectedBlockIndex=null; 
+                renderDiskManagement(); 
+                saveGameState(); 
+                return; 
+            } 
+            if(block.name==='D:'){ 
+                if(!gameState.questFlags.mergedDE){ 
+                    triggerErrorSpam('❌ Quest order: You must merge D and E (Quest 2) before deleting D! (+1 penalty)'); 
+                    incrementMoves(1); 
+                    return; 
+                } 
+                incrementMoves(0); 
+                gameState.diskLayout[sel]={ 
+                    name:"", 
+                    size:block.size, 
+                    type:"unallocated",
+                    source: 'D'  // Track that this came from D drive
+                }; 
+                gameState.selectedBlockIndex=null; 
+                renderDiskManagement(); 
+                saveGameState(); 
+                return; 
+            } 
+            triggerErrorSpam('sorry i cannot do that right now'); 
+        }
+        function extendVolume() { if(gameState.lockoutActive) return; const sel=gameState.selectedBlockIndex; if(sel===null){ triggerErrorSpam('No volume selected.'); return; } const block=gameState.diskLayout[sel]; if(block.type!=='partition'){ triggerErrorSpam('Can only extend a partition.'); return; } if(sel+1>=gameState.diskLayout.length || gameState.diskLayout[sel+1].type!=='unallocated'){ triggerErrorSpam('No adjacent unallocated space to the right.'); return; } const unalloc=gameState.diskLayout[sel+1]; if(block.name==='D:' && !gameState.questFlags.mergedDE && !gameState.questFlags.mergedPlayerWithD){ if(gameState.diskLayout.some(p=>p.name==='E:')){ triggerErrorSpam('❌ You must delete E: first, then extend D: to merge them (Quest 2).'); return; } incrementMoves(0); block.size+=unalloc.size; gameState.diskLayout.splice(sel+1,1); if(!gameState.questFlags.mergedDE) gameState.questFlags.mergedDE=true; gameState.selectedBlockIndex=null; renderDiskManagement(); saveGameState(); return; } const playerName=gameState.playerName.toUpperCase(); if(block.name===playerName){ if(!gameState.questFlags.mergedDE){ triggerErrorSpam('❌ You must complete Quest 2 (merge D & E) before extending your partition into D space!'); incrementMoves(1); return; } if(!gameState.diskLayout.some(p=>p.name==='D:' && p.type==='partition')){ incrementMoves(0); block.size+=unalloc.size; gameState.diskLayout.splice(sel+1,1); if(!gameState.questFlags.mergedPlayerWithD) gameState.questFlags.mergedPlayerWithD=true; gameState.selectedBlockIndex=null; renderDiskManagement(); saveGameState(); return; } else { triggerErrorSpam('❌ To merge with D, you must delete D first (make it unallocated), then extend your partition.'); return; } } triggerErrorSpam('Extend only works on D: (to merge E) or your named partition (to merge D space).'); }
+        function closeDiskManagement() { renderDesktopEnvironment(); }
+        function finishDiskQuest() { if(gameState.lockoutActive) return; if(gameState.questFlags.createdPlayerPartition && gameState.questFlags.mergedDE && gameState.questFlags.mergedPlayerWithD){ incrementMoves(0); gameState.currentQuiz=0; renderQuiz(); saveGameState(); } else { triggerErrorSpam('Complete all three quests first.'); } }
+        
+        // QUIZ & FINAL (unchanged)
+        const quizData=[{question:'Mengapa kita melakukan Install ulang Windows?',options:['A. untuk virus','B. ganti OPM','C. Atasi BUG/Error','D. Memperbarui Sistem'],correct:2},{question:'Kenapa harus ada pembagian partisi?',options:['A. agar bila salah satu kena virus, yang lain gk kena','B. mencegah terjadinya tabrakan data','C. memperbesar kapasitas memori penyimpanan','D. Apa itu partisi pak?'],correct:0},{question:'apa itu installer ?',options:['A. Program Komputer','B. Program untuk menginstal aplikasi','C. Aplikasi','D. Malware yang berada pada sistem komputer, sering kali mempengaruhi kinerja sistem'],correct:1}];
+        function renderQuiz() { updatePhaseIndicator('quiz'); const q=quizData[gameState.currentQuiz]; let opts=''; q.options.forEach((opt,idx)=>{ opts+=`<button onclick="answerQuiz(${idx})" style="display:block;width:100%;padding:12px;margin:8px 0;background:#0078d4;color:white;border:none;border-radius:5px;cursor:pointer;text-align:left;">${opt}</button>`; }); const screen=document.getElementById('screenContent'); screen.innerHTML=`<div class="installer-screen fade-in"><div class="installer-header">Quiz Question ${gameState.currentQuiz+1}/3</div><div class="installer-step"><h3 style="margin-bottom:20px;color:#333;">${q.question}</h3>${opts}<div class="error-message" id="quizError" style="margin-top:15px;"></div></div></div>`; saveGameState(); }
+        function answerQuiz(selected){ incrementMoves(0); const q=quizData[gameState.currentQuiz]; const err=document.getElementById('quizError'); if(selected===q.correct){ err.style.display='none'; gameState.currentQuiz++; if(gameState.currentQuiz>=quizData.length) setTimeout(showFinalSubmission,500); else renderQuiz(); saveGameState(); } else { incrementMoves(2); err.textContent='❌ Jawaban salah! Silakan pilih jawaban yang benar.'; err.style.display='block'; } }
+        function showFinalSubmission() { gameState.phase='final'; updatePhaseIndicator('final'); const finalScore=Math.max(0,100-gameState.moves); const screen=document.getElementById('screenContent'); screen.innerHTML=`<div class="completion-screen fade-in"><h2>🎉 SETUP COMPLETELY FINISHED!</h2><div class="score-display"><p><strong>Name:</strong> ${gameState.playerName}</p><p><strong>Class:</strong> ${gameState.playerClass}</p><p><strong>Email:</strong> ${gameState.playerEmail}</p><p><strong>Total Penalty Points:</strong> ${gameState.moves}</p><p style="color:${finalScore===100?'#00ff88':'#ff9800'};margin-top:10px;font-size:1.5rem;"><strong>Final Score: ${finalScore}</strong></p><p>${finalScore===100?'✅ Perfect! No errors made!':finalScore>=80?'👍 Good job! Minor mistakes.':finalScore>=60?'⚠️ Room for improvement.':'❌ Too many errors. Practice more!'}</p></div><button class="installer-button" id="submitBtn" onclick="submitScore()">Submit Score</button><p id="submitMessage" style="margin-top:15px;color:#00ff88;"></p></div>`; localStorage.removeItem('winSimSave'); }
+        
+        // Replace YOUR_SCRIPT_ID with your actual ID from the Web App URL
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx4BSQSCUr8AInwNcmZ3YiF9Jn42ect7g80bhxHSEBRSqoYf3_tW_kY8T_JTlwiIoEvwg/exec';
+        function submitScore() { 
+            const btn = document.getElementById('submitBtn'); 
+            btn.disabled = true; 
+            document.getElementById('submitMessage').textContent = 'Submitting...'; 
+            
+            const finalScore = Math.max(0, 100 - gameState.moves); 
+            const scoreData = { 
+                name: gameState.playerName, 
+                class: gameState.playerClass, 
+                email: gameState.playerEmail, 
+                moves: gameState.moves, 
+                finalScore: finalScore
+            }; 
+            
+            // Submit to Google Sheets
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({action: 'addScore', data: scoreData})
+            })
+            .then(() => {
+                document.getElementById('submitMessage').textContent = '✅ Score saved! Refresh to see updated leaderboard.';
+                // Refresh leaderboard after submit
+                setTimeout(loadLeaderboard, 2000);
+            })
+            .catch(err => {
+                console.error('Submit error:', err);
+                document.getElementById('submitMessage').textContent = '⚠️ Saved locally. Server sync failed.';
+            });
+        }
+        async function loadLeaderboard() { 
+            const cont = document.getElementById('leaderboardContent');
+            cont.innerHTML = '<p style="text-align:center;color:#888;">Loading scores...</p>';
+            
+            try {
+                // Try to fetch from Google Sheets
+                const response = await fetch(GOOGLE_SCRIPT_URL + '?action=getScores');
+                const scores = await response.json();
+                
+                if (scores.length === 0) {
+                    cont.innerHTML = '<p style="text-align:center;color:#888;">No scores yet. Be the first!</p>';
+                    return;
+                }
+                
+                let html = '<table><tr><th>Rank</th><th>Name</th><th>Class</th><th>Score</th><th>⚠️</th></tr>'; 
+                scores.slice(0, 10).forEach((e, i) => { 
+                    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}.`; 
+                    html += `<tr>
+                        <td>${medal}</td>
+                        <td>${escapeHtml(e.name)}</td>
+                        <td>${escapeHtml(e.class)}</td>
+                        <td style="color:${e.finalScore===100?'#00ff88':'#ff9800'};font-weight:bold;">${e.finalScore}</td>
+                        <td style="color:#ff6b6b;">${e.moves}</td>
+                    </tr>`; 
+                }); 
+                html += '</table>'; 
+                cont.innerHTML = html;
+                
+                // Also save to localStorage as backup
+                localStorage.setItem('winSimLeaderboard', JSON.stringify(scores));
+                
+            } catch (err) {
+                console.error('Load error:', err);
+                // Fallback to localStorage if server fails
+                loadLocalLeaderboard();
+            }
+        }
+
+        // Fallback function
+        function loadLocalLeaderboard() {
+            const cont = document.getElementById('leaderboardContent');
+            let scores = JSON.parse(localStorage.getItem('winSimLeaderboard') || '[]'); 
+            if (scores.length === 0) {
+                cont.innerHTML = '<p style="text-align:center;color:#888;">No scores yet. Be the first!</p>';
+            } else { 
+                let html = '<table><tr><th>Rank</th><th>Name</th><th>Score</th><th>⚠️</th></tr>'; 
+                scores.slice(0, 10).forEach((e, i) => { 
+                    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}.`; 
+                    html += `<tr>
+                        <td>${medal}</td>
+                        <td>${escapeHtml(e.name)}<br><small style="color:#888;">${escapeHtml(e.class)}</small></td>
+                        <td style="color:${e.finalScore===100?'#00ff88':'#ff9800'};font-weight:bold;">${e.finalScore}</td>
+                        <td style="color:#ff6b6b;">${e.moves}</td>
+                    </tr>`; 
+                }); 
+                html += '</table>'; 
+                cont.innerHTML = html; 
+            }
+        }
+        function escapeHtml(s){ if(!s) return ''; return s.replace(/[&<>]/g,function(m){ if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+        function updateUSBSelection() { const a=document.getElementById('usbA'), b=document.getElementById('usbB'); if(a) a.classList.remove('selected'); if(b) b.classList.remove('selected'); if(gameState.usbPlugged) { if(gameState.usbType==='A') a.classList.add('selected'); else b.classList.add('selected'); } }
+        function togglePower() { incrementMoves(0); gameState.powerOn=!gameState.powerOn; if(gameState.powerOn) renderHardwarePhase(); else { gameState.bootTiming=false; if(gameState.unplugTimer) clearInterval(gameState.unplugTimer); renderHardwarePhase(); } saveGameState(); }
+        function pressF2() { incrementMoves(0); if(gameState.bootTiming && gameState.phase==='hardware') { gameState.bootTiming=false; gameState.phase='bios'; renderBIOS(); saveGameState(); } }
+        function genericKeyPress() { incrementMoves(0); }
+        window.onload = () => { 
+            loadLeaderboard();  // Load leaderboard immediately
+            if(!loadGameState()) renderRegistration(); 
+        };
+    </script>
+</body>
+</html>
