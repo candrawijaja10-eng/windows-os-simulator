@@ -1087,6 +1087,17 @@
         <div class="move-counter">Penalty Score: <span id="moveCount">0</span></div>
     </div>
 
+    <DIV class="warning">
+        <!-- ADD THIS WARNING -->
+        <div style="background:#fff3cd;border:2px solid #ffc107;border-radius:8px;padding:12px;margin-bottom:15px;color:#856404;font-size:0.85rem;text-align:left;">
+            <strong>⚠️ Anti-Cheat Active:</strong><br>
+            • tidak diperkenankan membuka tabs/apps lain (5+ sec away = +10 penalty)<br>
+            • tidak diperkenankan resize window (split screen = +5 penalty)<br>
+            • tidak diperkenankan membuka DevTools/inspect (+2 penalty)<br>
+            • Refresh/reload OK dalam 5 detik (slow connection grace)
+        </div>         
+    </DIV>
+
     <div class="game-container">
         <!-- Left side: PC Screen Area -->
         <div class="pc-screen-area">
@@ -1099,7 +1110,7 @@
         <div class="leaderboard-panel" id="leaderboardPanel">
             <div class="leaderboard-header">🏆 Leaderboard</div>
             <div class="leaderboard-content" id="leaderboardContent">Loading...</div>
-        </div>
+        </div>       
     </div>
 
     <!-- ADD THIS BACK: Controls Area -->
@@ -1144,6 +1155,65 @@
         document.addEventListener('contextmenu', (e) => e.preventDefault());
         document.addEventListener('keydown', (e) => { if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I') || (e.ctrlKey && e.key === 'u') || (e.ctrlKey && e.key === 's')) { e.preventDefault(); incrementMoves(1); triggerErrorSpam('Cheat detected! +1 penalty.'); return false; } });
         let devtoolsOpen = false; setInterval(() => { let widthDiff = window.outerWidth - window.innerWidth > 160; let heightDiff = window.outerHeight - window.innerHeight > 160; if ((widthDiff || heightDiff) && !devtoolsOpen) { devtoolsOpen = true; incrementMoves(2); triggerErrorSpam('Developer tools detected! +2 penalty.'); } else if (!(widthDiff || heightDiff)) devtoolsOpen = false; }, 1000);
+        // TAB SWITCHING DETECTION with 5-second grace period for reloads
+        let tabSwitchGracePeriod = false;
+        let tabSwitchTimer = null;
+
+        document.addEventListener('visibilitychange', function() {
+            // Only detect if game is active and not completed
+            if (gameState.phase === 'registration' || gameState.phase === 'final') return;
+            
+            if (document.hidden) {
+                // User left tab - start grace period
+                tabSwitchGracePeriod = true;
+                
+                // Clear any existing timer
+                if (tabSwitchTimer) clearTimeout(tabSwitchTimer);
+                
+                // Set timer - if away for more than 5 seconds, it's cheating
+                tabSwitchTimer = setTimeout(() => {
+                    if (document.hidden) {
+                        // Still away after 5 seconds = cheating, not reloading
+                        tabSwitchGracePeriod = false;
+                        incrementMoves(10); 
+                        triggerErrorSpam('⚠️ TAB SWITCHING/APPS DETECTED! +10 penalty! Stay focused on the game!');
+                    }
+                }, 5000); // 5 second grace period for slow reloads
+                
+            } else {
+                // User returned to tab
+                if (tabSwitchGracePeriod) {
+                    // Came back within grace period = probably reload, not cheating
+                    clearTimeout(tabSwitchTimer);
+                    tabSwitchGracePeriod = false;
+                    // No penalty - assume it was a reload or quick check
+                }
+            }
+        });
+
+        // WINDOW RESIZE DETECTION (possible split screen for cheating)
+        let lastWindowWidth = window.innerWidth;
+        let lastWindowHeight = window.innerHeight;
+        let resizeTimer = null;
+
+        window.addEventListener('resize', () => {
+            // Ignore resize during registration or completion
+            if (gameState.phase === 'registration' || gameState.phase === 'final') return;
+            
+            const widthDiff = Math.abs(window.innerWidth - lastWindowWidth);
+            const heightDiff = Math.abs(window.innerHeight - lastWindowHeight);
+            
+            // Significant resize = possible split screen
+            if (widthDiff > 100 || heightDiff > 100) {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(() => {
+                    incrementMoves(5);
+                    triggerErrorSpam('⚠️ Window resize detected! +5 penalty! Keep window maximized!');
+                    lastWindowWidth = window.innerWidth;
+                    lastWindowHeight = window.innerHeight;
+                }, 500); // Small delay to ignore accidental drags
+            }
+        });
         
         let gameState = {
             phase: 'registration', moves: 0, playerName: '', playerClass: '', playerEmail: '', usbPlugged: false, usbType: null, powerOn: false, bootTiming: false, biosBootOrder: 'hardDrive',
