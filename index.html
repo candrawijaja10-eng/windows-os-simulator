@@ -64,13 +64,14 @@
         .game-container {
             flex: 1;
             display: flex;
-            flex-direction: row;  /* Changed from column to row */
-            max-width: 1200px;     /* Increased to fit both panels */
+            flex-direction: row;
+            max-width: 900px;     /* Reduced - no leaderboard */
             margin: 0 auto;
             width: 100%;
             padding: 10px;
-            gap: 20px;             /* Space between monitor and leaderboard */
+            gap: 20px;
             align-items: flex-start;
+            justify-content: center;  /* Center the monitor */
         }
 
         /* PC Screen Area - Takes most space */
@@ -81,78 +82,6 @@
             align-items: center;
             padding: 20px;
             min-height: 500px;
-        }
-
-        /* Leaderboard Panel - Outside monitor */
-        .leaderboard-panel {
-            flex: 1;               /* Takes 1/3 of space */
-            background: rgba(0, 0, 0, 0.4);
-            border-radius: 15px;
-            padding: 20px;
-            min-width: 250px;
-            max-width: 300px;
-            border: 2px solid #00d4ff;
-            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
-        }
-
-        .leaderboard-header {
-            color: #00d4ff;
-            font-size: 1.2rem;
-            font-weight: bold;
-            text-align: center;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #00d4ff;
-            text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
-        }
-
-        .leaderboard-content {
-            color: #fff;
-            font-size: 0.9rem;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-
-        /* Leaderboard table styling */
-        .leaderboard-content table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .leaderboard-content th {
-            color: #00d4ff;
-            padding: 8px 5px;
-            text-align: left;
-            font-size: 0.85rem;
-            border-bottom: 1px solid #00d4ff;
-        }
-
-        .leaderboard-content td {
-            padding: 6px 5px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            font-size: 0.8rem;
-        }
-
-        .leaderboard-content tr:hover {
-            background: rgba(0, 212, 255, 0.1);
-        }
-
-        /* Responsive - Stack vertically on mobile */
-        @media (max-width: 768px) {
-            .game-container {
-                flex-direction: column;
-            }
-            
-            .leaderboard-panel {
-                max-width: 100%;
-                width: 100%;
-                order: 2;          /* Move below monitor on mobile */
-            }
-            
-            .pc-screen-area {
-                order: 1;
-                min-height: auto;
-            }
         }
 
         .pc-monitor {
@@ -1087,21 +1016,24 @@
         <div class="move-counter">Penalty Score: <span id="moveCount">0</span></div>
     </div>
 
+    <DIV class="warning">
+        <!-- ADD THIS WARNING -->
+        <div style="background:#fff3cd;border:2px solid #ffc107;border-radius:8px;padding:12px;margin-bottom:15px;color:#856404;font-size:0.85rem;text-align:left;">
+            <strong>⚠️ Anti-Cheat Active:</strong><br>
+            • tidak diperkenankan membuka tabs/apps lain (5+ sec away = +10 penalty)<br>
+            • tidak diperkenankan resize window (split screen = +5 penalty)<br>
+            • tidak diperkenankan membuka DevTools/inspect (+2 penalty)<br>
+            • Refresh/reload OK dalam 5 detik (slow connection grace)
+        </div>         
+    </DIV>
     <div class="game-container">
         <!-- Left side: PC Screen Area -->
         <div class="pc-screen-area">
             <div class="pc-monitor">
                 <div class="screen-content" id="screenContent"></div>
             </div>
-        </div>
-        
-        <!-- Right side: Leaderboard (outside monitor) -->
-        <div class="leaderboard-panel" id="leaderboardPanel">
-            <div class="leaderboard-header">🏆 Leaderboard</div>
-            <div class="leaderboard-content" id="leaderboardContent">Loading...</div>
-        </div>
-    </div>
-
+        </div>     
+    </div> 
     <!-- ADD THIS BACK: Controls Area -->
     <div class="controls-area" id="controlsArea">
         <div class="controls-top">
@@ -1135,15 +1067,108 @@
                 <div class="keyboard-row"><button class="key" onclick="genericKeyPress()">Ctrl</button><button class="key" onclick="genericKeyPress()">Win</button><button class="key" onclick="genericKeyPress()">Alt</button><button class="key space" onclick="genericKeyPress()">Space</button><button class="key" onclick="genericKeyPress()">Alt</button><button class="key" onclick="genericKeyPress()">Fn</button><button class="key" onclick="genericKeyPress()">Ctrl</button></div>
             </div>
         </div>
-    </div>
+    </div>        
 
     <div id="errorOverlay" class="error-overlay"><div id="errorMessages"></div></div>
 
     <script>
-        // ANTI-CHEAT & SAVE/LOAD (abbreviated for length but fully functional)
+            // ========== ANTI-CHEAT SYSTEM (Mobile-Safe) ==========
+
+        // Prevent right-click context menu
         document.addEventListener('contextmenu', (e) => e.preventDefault());
-        document.addEventListener('keydown', (e) => { if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I') || (e.ctrlKey && e.key === 'u') || (e.ctrlKey && e.key === 's')) { e.preventDefault(); incrementMoves(1); triggerErrorSpam('Cheat detected! +1 penalty.'); return false; } });
-        let devtoolsOpen = false; setInterval(() => { let widthDiff = window.outerWidth - window.innerWidth > 160; let heightDiff = window.outerHeight - window.innerHeight > 160; if ((widthDiff || heightDiff) && !devtoolsOpen) { devtoolsOpen = true; incrementMoves(2); triggerErrorSpam('Developer tools detected! +2 penalty.'); } else if (!(widthDiff || heightDiff)) devtoolsOpen = false; }, 1000);
+
+        // Prevent DevTools shortcuts
+        document.addEventListener('keydown', (e) => { 
+            if (e.key === 'F12' || 
+                (e.ctrlKey && e.shiftKey && e.key === 'I') || 
+                (e.ctrlKey && e.key === 'u') || 
+                (e.ctrlKey && e.key === 's')) { 
+                e.preventDefault(); 
+                incrementMoves(1); 
+                triggerErrorSpam('Cheat detected! +1 penalty.'); 
+                return false; 
+            } 
+        });
+
+        // DevTools detection (keep this - works reliably)
+        let devtoolsOpen = false; 
+        setInterval(() => { 
+            let widthDiff = window.outerWidth - window.innerWidth > 160; 
+            let heightDiff = window.outerHeight - window.innerHeight > 160; 
+            if ((widthDiff || heightDiff) && !devtoolsOpen) { 
+                devtoolsOpen = true; 
+                incrementMoves(2); 
+                triggerErrorSpam('Developer tools detected! +2 penalty.'); 
+            } else if (!(widthDiff || heightDiff)) {
+                devtoolsOpen = false; 
+            } 
+        }, 1000);
+
+        // ========== MOBILE-SAFE TAB SWITCHING DETECTION ==========
+        let tabSwitchGracePeriod = false;
+        let tabSwitchTimer = null;
+
+        document.addEventListener('visibilitychange', function() {
+            if (gameState.phase === 'registration' || gameState.phase === 'final') return;
+            
+            if (document.hidden) {
+                tabSwitchGracePeriod = true;
+                if (tabSwitchTimer) clearTimeout(tabSwitchTimer);
+                
+                tabSwitchTimer = setTimeout(() => {
+                    if (document.hidden) {
+                        tabSwitchGracePeriod = false;
+                        incrementMoves(10); 
+                        triggerErrorSpam('⚠️ TAB SWITCHING/APPS DETECTED! +10 penalty! Stay focused on the game!');
+                    }
+                }, 5000);
+            } else {
+                if (tabSwitchGracePeriod) {
+                    clearTimeout(tabSwitchTimer);
+                    tabSwitchGracePeriod = false;
+                }
+            }
+        });
+
+        // ========== MOBILE-SAFE RESIZE DETECTION ==========
+        let lastStableWidth = window.innerWidth;
+        let lastStableHeight = window.innerHeight;
+        let resizeDebounceTimer = null;
+        let orientationJustChanged = false;
+
+        // Detect orientation change separately (not a cheat)
+        window.addEventListener('orientationchange', () => {
+            orientationJustChanged = true;
+            setTimeout(() => {
+                lastStableWidth = window.innerWidth;
+                lastStableHeight = window.innerHeight;
+                orientationJustChanged = false;
+            }, 500);
+        });
+
+        // Debounced resize handler - ignores Safari UI changes and rotations
+        window.addEventListener('resize', () => {
+            if (gameState.phase === 'registration' || gameState.phase === 'final') return;
+            if (orientationJustChanged) return;
+            
+            // Skip if on mobile - too many false positives from Safari UI
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            if (isMobile) return;
+            
+            // Desktop-only resize detection
+            clearTimeout(resizeDebounceTimer);
+            resizeDebounceTimer = setTimeout(() => {
+                const widthDiff = Math.abs(window.innerWidth - lastStableWidth);
+                const heightDiff = Math.abs(window.innerHeight - lastStableHeight);
+                
+                if (widthDiff > 200 || heightDiff > 200) {
+                    incrementMoves(5);
+                    triggerErrorSpam('⚠️ Window resize detected! +5 penalty! Keep window maximized!');
+                    lastStableWidth = window.innerWidth;
+                    lastStableHeight = window.innerHeight;
+                }
+            }, 1000);
+        });
         
         let gameState = {
             phase: 'registration', moves: 0, playerName: '', playerClass: '', playerEmail: '', usbPlugged: false, usbType: null, powerOn: false, bootTiming: false, biosBootOrder: 'hardDrive',
@@ -1226,7 +1251,6 @@
                     </div>
                 </div>
             `; 
-            loadLeaderboard();  // This now updates the external panel
         }
         function validateRegistration() { const name=document.getElementById('playerName').value.trim(), cls=document.getElementById('playerClass').value.trim(), email=document.getElementById('playerEmail').value.trim(); document.getElementById('startBtn').disabled = !(name && cls && email); }
         function startGame() { gameState.playerName=document.getElementById('playerName').value.trim(); gameState.playerClass=document.getElementById('playerClass').value.trim(); gameState.playerEmail=document.getElementById('playerEmail').value.trim(); gameState.phase='hardware'; incrementMoves(0); renderHardwarePhase(); saveGameState(); }
@@ -1417,11 +1441,13 @@
                 const nameDisplay=block.type==='unallocated'?'Unallocated':block.name;
                 diskBlocksHtml+=`<div class="disk-block ${extraClass} ${isSelected?'selected':''}" onclick="selectDiskBlock(${idx})"><strong>${nameDisplay}</strong><br>${block.size} GB</div>`;
             });
-            const playerName=gameState.playerName.toUpperCase();
-            const q1done=gameState.questFlags.createdPlayerPartition;
-            const q2done=gameState.questFlags.mergedDE;
-            const q3done=gameState.questFlags.mergedPlayerWithD;
-            screen.innerHTML=`
+            // Check quest completion status
+            const playerName = gameState.playerName.toUpperCase();
+            const q1done = gameState.questFlags.createdPlayerPartition;
+            const q2done = gameState.questFlags.mergedDE;
+            const q3done = gameState.diskLayout.length === 1 && gameState.diskLayout[0].name === 'C:';
+            
+            screen.innerHTML = `
                 <div class="disk-management">
                     <div class="disk-header">Disk Management</div>
                     <div class="disk-map">${diskBlocksHtml}</div>
@@ -1433,12 +1459,22 @@
                     </div>
                     <div style="background:#fff3cd; border:2px solid #ffc107; border-radius:8px; padding:15px; margin:20px 0; color:#333;">
                         <h4 style="margin-bottom:10px; color:#856404;">🎯 Quest Objectives:</h4>
-                        <div style="margin:8px 0; ${q1done?'text-decoration:line-through; color:#28a745;':'color:#333;'}">${q1done?'✅':'⬜'} 1. Bagi partisi C menjadi 2 dan namai partisi baru dengan nama "${playerName}"!</div>
-                        <div style="margin:8px 0; ${q2done?'text-decoration:line-through; color:#28a745;':'color:#333;'}">${q2done?'✅':'⬜'} 2. Gabungkan partisi D dan E!</div>
-                        <div style="margin:8px 0; ${q3done?'text-decoration:line-through; color:#28a745;':'color:#333;'}">${q3done?'✅':'⬜'} 3. Gabungkan partisi "${playerName}" dan D yang sudah digabung dengan E tadi!</div>
+                        <div style="margin:8px 0; ${q1done ? 'text-decoration:line-through; color:#28a745;' : 'color:#333;'}">
+                            ${q1done ? '✅' : '⬜'} 1. Bagi partisi C menjadi 2 dan namai partisi baru dengan nama "${playerName}"!
+                        </div>
+                        <div style="margin:8px 0; ${q2done ? 'text-decoration:line-through; color:#28a745;' : 'color:#333;'}">
+                            ${q2done ? '✅' : '⬜'} 2. Gabungkan partisi D dan E!
+                        </div>
+                        <div style="margin:8px 0; ${q3done ? 'text-decoration:line-through; color:#28a745;' : 'color:#333;'}">
+                            ${q3done ? '✅' : '⬜'} 3. Gabungkan SEMUA partisi menjadi 1 partisi (C:) saja! 
+                            <br><small style="color:#666; margin-left:20px;">💡 Hint: kerjakan berurutan!</small>
+                        </div>
                     </div>
                     <button onclick="closeDiskManagement()" style="margin-right:10px;">Close</button>
-                    <button id="finishBtn" onclick="finishDiskQuest()" ${!(q1done && q2done && q3done)?'disabled':''} style="background:${(q1done && q2done && q3done)?'#28a745':'#6c757d'}; color:white; padding:10px 25px; font-weight:bold;">${(q1done && q2done && q3done)?'✅ Finish Quest':'🔒 Complete Quests First'}</button>
+                    <button id="finishBtn" onclick="finishDiskQuest()" ${!(q1done && q2done && q3done) ? 'disabled' : ''} 
+                        style="background:${(q1done && q2done && q3done) ? '#28a745' : '#6c757d'}; color:white; padding:10px 25px; font-weight:bold;">
+                        ${(q1done && q2done && q3done) ? '✅ Finish Quest' : '🔒 Complete Quests First'}
+                    </button>
                 </div>
             `;
         }
@@ -1491,7 +1527,7 @@
             const dIndex = gameState.diskLayout.findIndex(b => b.name === 'D:');
             const eIndex = gameState.diskLayout.findIndex(b => b.name === 'E:');
             
-            // FIX: Only check for E's space if E has been deleted (eIndex === -1) 
+            // Only check for E's space if E has been deleted (eIndex === -1) 
             // AND D still exists (dIndex !== -1) 
             // AND D+E haven't been merged yet (!gameState.questFlags.mergedDE)
             if (eIndex === -1 && dIndex !== -1 && !gameState.questFlags.mergedDE) {
@@ -1504,13 +1540,6 @@
                     triggerErrorSpam('❌ Quest Order Violation: You must merge D and E (Quest 2) before creating your named partition! You cannot create a new volume from E\'s space yet. (+2 penalty)');
                     return;
                 }
-            }
-            
-            // Additional check: Only allow creating player partition from C's shrink space
-            // The player partition should only be created from space immediately after C:
-            if (sel !== cIndex + 1) {
-                triggerErrorSpam('❌ You can only create your named partition from unallocated space immediately after C: drive. Shrink C: first!');
-                return;
             }
             
             incrementMoves(0); 
@@ -1532,56 +1561,173 @@
         }
         function deleteVolume() { 
             if(gameState.lockoutActive) return; 
-            const sel=gameState.selectedBlockIndex; 
-            if(sel===null){ 
+            const sel = gameState.selectedBlockIndex; 
+            if(sel === null){ 
                 triggerErrorSpam('No volume selected.'); 
                 return; 
             } 
-            const block=gameState.diskLayout[sel]; 
-            if(block.type!=='partition'){ 
+            const block = gameState.diskLayout[sel]; 
+            if(block.type !== 'partition'){ 
                 triggerErrorSpam('Only partitions can be deleted.'); 
                 return; 
             } 
-            if(block.name==='E:'){ 
-                incrementMoves(0); 
-                // FIX: Mark this as E's unallocated space
-                gameState.diskLayout[sel]={ 
-                    name:"", 
-                    size:block.size, 
-                    type:"unallocated",
-                    source: 'E'  // Track that this came from E drive
-                }; 
-                gameState.selectedBlockIndex=null; 
-                renderDiskManagement(); 
-                saveGameState(); 
-                return; 
-            } 
-            if(block.name==='D:'){ 
-                if(!gameState.questFlags.mergedDE){ 
+            
+            // Cannot delete C: drive (system partition)
+            if(block.name === 'C:') {
+                triggerErrorSpam('❌ Cannot delete system partition C:!'); 
+                return;
+            }
+            
+            // Quest 1 & 2 must be completed before doing Quest 3 (merging everything)
+            const q1done = gameState.questFlags.createdPlayerPartition;
+            const q2done = gameState.questFlags.mergedDE;
+            
+            if(!(q1done && q2done)) {
+                // Before quest 3: Only allow deleting E (for quest 2)
+                if(block.name === 'E:'){ 
+                    incrementMoves(0); 
+                    gameState.diskLayout[sel] = { 
+                        name: "", 
+                        size: block.size, 
+                        type: "unallocated",
+                        source: 'E'
+                    }; 
+                    gameState.selectedBlockIndex = null; 
+                    renderDiskManagement(); 
+                    saveGameState(); 
+                    return; 
+                }
+                if(block.name === 'D:'){ 
                     triggerErrorSpam('❌ Quest order: You must merge D and E (Quest 2) before deleting D! (+1 penalty)'); 
                     incrementMoves(1); 
                     return; 
-                } 
-                incrementMoves(0); 
-                gameState.diskLayout[sel]={ 
-                    name:"", 
-                    size:block.size, 
-                    type:"unallocated",
-                    source: 'D'  // Track that this came from D drive
-                }; 
-                gameState.selectedBlockIndex=null; 
-                renderDiskManagement(); 
-                saveGameState(); 
+                }
+                triggerErrorSpam('Complete Quest 1 and 2 first!'); 
+                return;
+            }
+            
+            // Quest 3 mode: Can delete any partition except C:
+            incrementMoves(0); 
+            gameState.diskLayout[sel] = { 
+                name: "", 
+                size: block.size, 
+                type: "unallocated",
+                source: block.name.replace(':', '')
+            }; 
+            gameState.selectedBlockIndex = null; 
+            renderDiskManagement(); 
+            saveGameState(); 
+        }
+        function extendVolume() { 
+            if(gameState.lockoutActive) return; 
+            
+            const sel = gameState.selectedBlockIndex; 
+            if(sel === null){ 
+                triggerErrorSpam('No volume selected.'); 
                 return; 
             } 
-            triggerErrorSpam('sorry i cannot do that right now'); 
+            
+            const block = gameState.diskLayout[sel]; 
+            if(block.type !== 'partition'){ 
+                triggerErrorSpam('Can only extend a partition.'); 
+                return; 
+            } 
+            
+            // Check if there's any unallocated space to the right
+            if(sel + 1 >= gameState.diskLayout.length) {
+                triggerErrorSpam('No space to extend. Unallocated space must be on the right side.'); 
+                return;
+            }
+            
+            // Check if next block is unallocated
+            const nextBlock = gameState.diskLayout[sel + 1];
+            if(nextBlock.type !== 'unallocated') {
+                triggerErrorSpam('No adjacent unallocated space to the right. Delete the partition on the right first!'); 
+                return;
+            }
+            
+            const q1done = gameState.questFlags.createdPlayerPartition;
+            const q2done = gameState.questFlags.mergedDE;
+            
+            // QUEST 2: Merge D and E (before quest 3 starts)
+            if(block.name === 'D:' && !q2done) {
+                // Check if E exists (if E was deleted, we can extend)
+                const eExists = gameState.diskLayout.some(p => p.name === 'E:');
+                if(eExists) {
+                    triggerErrorSpam('❌ You must delete E: first, then extend D: to merge them (Quest 2).'); 
+                    return;
+                }
+                // Merge D with unallocated (which was E)
+                incrementMoves(0); 
+                block.size += nextBlock.size; 
+                gameState.diskLayout.splice(sel + 1, 1); 
+                gameState.questFlags.mergedDE = true; 
+                gameState.selectedBlockIndex = null; 
+                renderDiskManagement(); 
+                saveGameState(); 
+                return;
+            }
+            
+            // QUEST 3: Generic merge logic for final quest
+            if(q1done && q2done) {
+                // Count how many consecutive unallocated blocks to the right
+                let mergeCount = 0;
+                let totalExtraSize = 0;
+                
+                for(let i = sel + 1; i < gameState.diskLayout.length; i++) {
+                    if(gameState.diskLayout[i].type === 'unallocated') {
+                        mergeCount++;
+                        totalExtraSize += gameState.diskLayout[i].size;
+                    } else {
+                        break; // Stop at first partition
+                    }
+                }
+                
+                if(mergeCount === 0) {
+                    triggerErrorSpam('No unallocated space to merge.'); 
+                    return;
+                }
+                
+                incrementMoves(0); 
+                // Merge all consecutive unallocated blocks
+                block.size += totalExtraSize; 
+                // Remove the unallocated blocks (remove mergeCount blocks starting from sel+1)
+                gameState.diskLayout.splice(sel + 1, mergeCount); 
+                gameState.selectedBlockIndex = null; 
+                renderDiskManagement(); 
+                saveGameState(); 
+                return;
+            }
+            
+            // If we get here, the operation isn't allowed yet
+            triggerErrorSpam('Complete quests in order! Finish Quest 2 first.'); 
         }
-        function extendVolume() { if(gameState.lockoutActive) return; const sel=gameState.selectedBlockIndex; if(sel===null){ triggerErrorSpam('No volume selected.'); return; } const block=gameState.diskLayout[sel]; if(block.type!=='partition'){ triggerErrorSpam('Can only extend a partition.'); return; } if(sel+1>=gameState.diskLayout.length || gameState.diskLayout[sel+1].type!=='unallocated'){ triggerErrorSpam('No adjacent unallocated space to the right.'); return; } const unalloc=gameState.diskLayout[sel+1]; if(block.name==='D:' && !gameState.questFlags.mergedDE && !gameState.questFlags.mergedPlayerWithD){ if(gameState.diskLayout.some(p=>p.name==='E:')){ triggerErrorSpam('❌ You must delete E: first, then extend D: to merge them (Quest 2).'); return; } incrementMoves(0); block.size+=unalloc.size; gameState.diskLayout.splice(sel+1,1); if(!gameState.questFlags.mergedDE) gameState.questFlags.mergedDE=true; gameState.selectedBlockIndex=null; renderDiskManagement(); saveGameState(); return; } const playerName=gameState.playerName.toUpperCase(); if(block.name===playerName){ if(!gameState.questFlags.mergedDE){ triggerErrorSpam('❌ You must complete Quest 2 (merge D & E) before extending your partition into D space!'); incrementMoves(1); return; } if(!gameState.diskLayout.some(p=>p.name==='D:' && p.type==='partition')){ incrementMoves(0); block.size+=unalloc.size; gameState.diskLayout.splice(sel+1,1); if(!gameState.questFlags.mergedPlayerWithD) gameState.questFlags.mergedPlayerWithD=true; gameState.selectedBlockIndex=null; renderDiskManagement(); saveGameState(); return; } else { triggerErrorSpam('❌ To merge with D, you must delete D first (make it unallocated), then extend your partition.'); return; } } triggerErrorSpam('Extend only works on D: (to merge E) or your named partition (to merge D space).'); }
         function closeDiskManagement() { renderDesktopEnvironment(); }
-        function finishDiskQuest() { if(gameState.lockoutActive) return; if(gameState.questFlags.createdPlayerPartition && gameState.questFlags.mergedDE && gameState.questFlags.mergedPlayerWithD){ incrementMoves(0); gameState.currentQuiz=0; renderQuiz(); saveGameState(); } else { triggerErrorSpam('Complete all three quests first.'); } }
-        
+        function finishDiskQuest() { 
+            if(gameState.lockoutActive) return; 
+            
+            const q1done = gameState.questFlags.createdPlayerPartition;
+            const q2done = gameState.questFlags.mergedDE;
+            
+            // Check if all 3 quests completed
+            // Quest 3 completion: only 1 partition remains (C:)
+            const onlyOnePartition = gameState.diskLayout.length === 1 && gameState.diskLayout[0].name === 'C:';
+            
+            if(q1done && q2done && onlyOnePartition) {
+                incrementMoves(0); 
+                gameState.currentQuiz = 0; 
+                renderQuiz(); 
+                saveGameState(); 
+            } else if(!q1done) {
+                triggerErrorSpam('Complete Quest 1: Create your named partition from C:!'); 
+            } else if(!q2done) {
+                triggerErrorSpam('Complete Quest 2: Merge D and E!'); 
+            } else {
+                triggerErrorSpam('Complete Quest 3: Merge ALL partitions into one (C:)! Delete right partitions and extend leftward.'); 
+            } 
+        }        
         // QUIZ & FINAL (unchanged)
-        const quizData=[{question:'Mengapa kita melakukan Install ulang Windows?',options:['A. untuk virus','B. ganti OPM','C. Atasi BUG/Error','D. Memperbarui Sistem'],correct:2},{question:'Kenapa harus ada pembagian partisi?',options:['A. agar bila salah satu kena virus, yang lain gk kena','B. mencegah terjadinya tabrakan data','C. memperbesar kapasitas memori penyimpanan','D. Apa itu partisi pak?'],correct:0},{question:'apa itu installer ?',options:['A. Program Komputer','B. Program untuk menginstal aplikasi','C. Aplikasi','D. Malware yang berada pada sistem komputer, sering kali mempengaruhi kinerja sistem'],correct:1}];
+        const quizData=[{question:'Apa itu Sistem Operasi?',options:['A. Perangkat keras utama yang berfungsi sebagai otak komputer','B. Sekumpulan file yang hanya berfungsi untuk menyimpan data dalam komputer','C. Perangkat lunak yang mengatur sumber daya komputer dan menghubungkan pengguna dengan perangkat keras','D. Program aplikasi yang digunakan untuk menjalankan tugas tertentu seperti mengetik atau browsing'],correct:2},{question:'Kenapa kita melakukan format pada Data C saat Install Ulang?',options:['A. Agar tidak ada data sistem operasi lama yang tertinggal','B. Agar tidak ada data penting yang hilang','C. Agar...Agar-agar pak, laper!','D. Agar sistem operasi terpasang?'],correct:0},{question:'Yang tidak termasuk hal yang dapat kita lakukan di Task Manager adalah?',options:['A. Memantau aplikasi yang sedang berjalan','B. Membuka Aplikasi secara langsung','C. Mengatur Aplikasi Startup','D. Menutup aplikasi secara paksa'],correct:1}];
         function renderQuiz() { updatePhaseIndicator('quiz'); const q=quizData[gameState.currentQuiz]; let opts=''; q.options.forEach((opt,idx)=>{ opts+=`<button onclick="answerQuiz(${idx})" style="display:block;width:100%;padding:12px;margin:8px 0;background:#0078d4;color:white;border:none;border-radius:5px;cursor:pointer;text-align:left;">${opt}</button>`; }); const screen=document.getElementById('screenContent'); screen.innerHTML=`<div class="installer-screen fade-in"><div class="installer-header">Quiz Question ${gameState.currentQuiz+1}/3</div><div class="installer-step"><h3 style="margin-bottom:20px;color:#333;">${q.question}</h3>${opts}<div class="error-message" id="quizError" style="margin-top:15px;"></div></div></div>`; saveGameState(); }
         function answerQuiz(selected){ incrementMoves(0); const q=quizData[gameState.currentQuiz]; const err=document.getElementById('quizError'); if(selected===q.correct){ err.style.display='none'; gameState.currentQuiz++; if(gameState.currentQuiz>=quizData.length) setTimeout(showFinalSubmission,500); else renderQuiz(); saveGameState(); } else { incrementMoves(2); err.textContent='❌ Jawaban salah! Silakan pilih jawaban yang benar.'; err.style.display='block'; } }
         function showFinalSubmission() { gameState.phase='final'; updatePhaseIndicator('final'); const finalScore=Math.max(0,100-gameState.moves); const screen=document.getElementById('screenContent'); screen.innerHTML=`<div class="completion-screen fade-in"><h2>🎉 SETUP COMPLETELY FINISHED!</h2><div class="score-display"><p><strong>Name:</strong> ${gameState.playerName}</p><p><strong>Class:</strong> ${gameState.playerClass}</p><p><strong>Email:</strong> ${gameState.playerEmail}</p><p><strong>Total Penalty Points:</strong> ${gameState.moves}</p><p style="color:${finalScore===100?'#00ff88':'#ff9800'};margin-top:10px;font-size:1.5rem;"><strong>Final Score: ${finalScore}</strong></p><p>${finalScore===100?'✅ Perfect! No errors made!':finalScore>=80?'👍 Good job! Minor mistakes.':finalScore>=60?'⚠️ Room for improvement.':'❌ Too many errors. Practice more!'}</p></div><button class="installer-button" id="submitBtn" onclick="submitScore()">Submit Score</button><p id="submitMessage" style="margin-top:15px;color:#00ff88;"></p></div>`; localStorage.removeItem('winSimSave'); }
@@ -1684,7 +1830,6 @@
         function pressF2() { incrementMoves(0); if(gameState.bootTiming && gameState.phase==='hardware') { gameState.bootTiming=false; gameState.phase='bios'; renderBIOS(); saveGameState(); } }
         function genericKeyPress() { incrementMoves(0); }
         window.onload = () => { 
-            loadLeaderboard();  // Load leaderboard immediately
             if(!loadGameState()) renderRegistration(); 
         };
     </script>
